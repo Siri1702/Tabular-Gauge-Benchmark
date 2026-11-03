@@ -10,8 +10,8 @@ This repository serves as both a **practitioner's toolkit** and a **transparent 
 
 ### 1. Installation
 ```bash
-git clone https://github.com/Siri1702/Tabular-Gauge.git
-cd Tabular-Gauge
+git clone https://github.com/Siri1702/Tabular-Gauge-Benchmark.git
+cd Tabular-Gauge-Benchmark
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 # venv\\Scripts\\Activate.ps1 # Windows
