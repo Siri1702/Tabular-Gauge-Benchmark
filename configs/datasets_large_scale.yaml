@@ -1,0 +1,112 @@
+# Large-Scale & Context Window Analysis Configuration
+# Complementary to few-shot analysis - tests behavior with ABUNDANT data
+
+datasets:
+  # Medium-Large (N = 5000-20000)
+  # These test the subsampling behavior
+
+  - id: 1489
+    name: phoneme
+    task: binary
+    target: class
+    n_rows: 5404
+    n_features: 5
+    domain: audio-derived
+    notes: "Currently largest in benchmark - good baseline"
+
+  # Additional larger datasets from OpenML for testing
+  # These need to be added manually or from other sources
+
+  - id: 1590
+    name: adult
+    task: binary
+    target: income
+    n_rows: 48842
+    n_features: 14
+    domain: demographic
+    notes: "Classic adult census - large!"
+
+  - id: 23517
+    name: epsilon
+    task: binary
+    target: target
+    n_rows: 500000
+    n_features: 2000
+    domain: synthetic
+    notes: "Very large - will stress test subsampling"
+
+  - id: 41163
+    name:航空公司 churn
+    task: binary
+    target: target
+    n_rows: 62984
+    n_features: 20
+    domain: customer-churn
+    notes: "Airline customer churn - real business problem"
+
+
+# Context Window Analysis (TabPFN-specific)
+# Tests how TabPFN performance changes with context size
+
+context_window_analysis:
+  # Test TabPFN at different context limits
+  # Current default is max_context_size=8000
+
+  max_context_sizes:
+    - 500     # Very small context
+    - 1000    # Small context
+    - 2000    # Medium-small context
+    - 4000    # Medium context
+    - 8000    # Current default (baseline)
+    - 12000   # Larger than default
+    - 16000   # Even larger
+
+  # Research questions:
+  # 1. Does increasing context always help?
+  # 2. At what point does more context stop helping (diminishing returns)?
+  # 3. Is there a context size where GBDT outperforms TabPFN consistently?
+
+  # Compare with:
+  # - XGBoost with full data (no subsampling)
+  # - LightGBM with full data
+
+
+# Large-Scale Analysis Settings
+large_scale_analysis:
+  # Test at these sample sizes by subsampling FROM large datasets
+  sample_sizes:
+    - 1000
+    - 2500
+    - 5000
+    - 10000
+    - 25000
+    - null  # Use full
+
+  # Key metrics:
+  # 1. Does TabPFN subsampling hurt vs using all data?
+  # 2. At what size does tuned GBDT beat TabPFN consistently?
+  # 3. Is there a crossover point in the large data regime?
+
+  # Compare models:
+  # - TabPFN (with context window limits)
+  # - XGBoost (full data)
+  # - LightGBM (full data)
+
+
+# Combined Analysis Matrix
+
+experiments:
+  - name: "few_shot"
+    description: "Test performance with limited training data"
+    train_sizes: [25, 50, 75, 100, 150, 200, 300, 500, 750, 1000]
+    datasets: few_shot
+
+  - name: "context_window"
+    description: "Test TabPFN with varying context sizes"
+    context_sizes: [500, 1000, 2000, 4000, 8000, 12000, 16000]
+    datasets: medium_scale
+
+  - name: "large_scale"
+    description: "Test with abundant data"
+    train_sizes: [1000, 2500, 5000, 10000, 25000, null]
+    datasets: large_scale

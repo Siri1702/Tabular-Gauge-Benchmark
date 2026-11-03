@@ -1,0 +1,72 @@
+{
+  "timestamp_utc": "2026-08-16T11:38:47Z",
+  "wrapper_path": "tabular_gauge/models/tabpfn_model.py",
+  "expected_version": "8.0.8",
+  "results": {
+    "version_contract": {
+      "installed_version": "8.0.8",
+      "expected_version": "8.0.8",
+      "version_match": true,
+      "missing_required_kwargs": [],
+      "init_signature_params": [
+        "auto_scale_n_estimators",
+        "average_before_softmax",
+        "balance_probabilities",
+        "categorical_features_indices",
+        "device",
+        "differentiable_input",
+        "eval_metric",
+        "fit_mode",
+        "ignore_pretraining_limits",
+        "inference_config",
+        "inference_precision",
+        "keep_cache_on_device",
+        "memory_saving_mode",
+        "model_path",
+        "n_estimators",
+        "n_jobs",
+        "n_preprocessing_jobs",
+        "random_state",
+        "self",
+        "show_progress_bar",
+        "softmax_temperature",
+        "tuning_config"
+      ]
+    },
+    "smoke": {
+      "n_train": 80,
+      "n_test": 40,
+      "predict_proba_shape": [
+        40
+      ],
+      "auc": 1.0,
+      "fit_seconds": 3.709,
+      "predict_seconds": 4.15,
+      "context_used": 80,
+      "context_original": 80,
+      "was_subsampled": false,
+      "auc_above_chance": true
+    },
+    "subsampling": {
+      "n_train_input": 12000,
+      "max_context_size": 8000,
+      "context_used": 8000,
+      "was_subsampled": true,
+      "subsampled_to_max": true
+    },
+    "determinism": {
+      "aucs": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "max_minus_min": 0.0,
+      "deterministic": true
+    },
+    "ignore_pretraining_limits": {
+      "accepted": true,
+      "error": null
+    }
+  },
+  "verdict_pass": true
+}

@@ -1,0 +1,5 @@
+datasets:
+  - name: smoke_test
+    source: csv
+    path: data/smoke_test.csv
+    target: target

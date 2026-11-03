@@ -1,0 +1,40 @@
+# Core ML
+tabpfn
+xgboost
+lightgbm
+catboost
+scikit-learn
+torch
+tabpfn-client
+
+# Tabular Foundation Models (Foundation Model Suite)
+# Note: Some models may require Python >= 3.11
+sap-rpt
+jax==0.10.1
+flax==0.12.7
+
+# Data
+openml
+pandas
+numpy
+
+# Evaluation & Stats
+scipy
+scikit-posthocs    # for CD diagrams
+netcal           # for calibration (ECE, reliability diagrams)
+
+# Visualization & Dashboard
+matplotlib
+seaborn
+plotly
+dash          # Interactive dashboard
+
+# Experiment tracking
+mlflow          # local tracking, no account needed
+
+# Utilities
+pyyaml
+tqdm
+joblib
+psutil
+optuna           # for hyperparameter optimization

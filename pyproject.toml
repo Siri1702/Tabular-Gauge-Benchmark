@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tabular-gauge"
+version = "0.1.0"
+description = "A holistic evaluation suite for Tabular Foundation Models and traditional ML baselines"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Siri1702"}
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "pyyaml",
+    "matplotlib",
+    "psutil",
+    "tqdm",
+    "scipy",
+    "scikit-posthocs",
+    "netcal",
+]
+
+[project.optional-dependencies]
+baselines = [
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "optuna",
+]
+foundation = [
+    "torch",
+    "tabpfn",
+    "tabpfn-client",
+    "jax==0.10.1",
+    "flax==0.12.7",
+]
+dev = [
+    "pytest",
+    "ruff",
+    "setuptools",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tabular_gauge*"]
+
+[tool.setuptools.package-data]
+"tabular_gauge" = ["*.yaml", "configs/*.yaml"]

@@ -1,0 +1,4 @@
+experiment:
+  n_seeds: 1
+  name: smoke_test_run
+  test_size: 0.2

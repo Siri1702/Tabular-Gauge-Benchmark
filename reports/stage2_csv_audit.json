@@ -1,0 +1,247 @@
+{
+  "path": "C:\\Users\\siri\\Desktop\\Tabfm-benchmark\\experiments\\results\\few_shot\\multiseed_few_shot_results.csv",
+  "n_rows": 1800,
+  "n_cols": 48,
+  "schema": {
+    "model": "object",
+    "dataset": "object",
+    "seed": "int64",
+    "n_train": "int64",
+    "n_test": "int64",
+    "n_features": "int64",
+    "fit_time_sec": "float64",
+    "predict_time_sec": "float64",
+    "total_time_sec": "float64",
+    "tuning_time_sec": "float64",
+    "total_wall_time_sec": "float64",
+    "throughput_rows_per_sec": "float64",
+    "ms_per_test_row": "float64",
+    "peak_memory_mb": "float64",
+    "memory_delta_mb": "float64",
+    "gpu_memory_mb": "float64",
+    "error": "float64",
+    "roc_auc": "float64",
+    "avg_precision": "float64",
+    "f1_macro": "float64",
+    "f1_weighted": "float64",
+    "brier_score": "float64",
+    "log_loss_val": "float64",
+    "accuracy": "float64",
+    "sensitivity": "float64",
+    "specificity": "float64",
+    "ppv": "float64",
+    "ece_10": "float64",
+    "ece_15": "float64",
+    "max_calibration_error": "float64",
+    "pr_auc": "float64",
+    "optimal_threshold": "float64",
+    "optimal_tpr": "float64",
+    "optimal_fpr": "float64",
+    "precision_class_0": "float64",
+    "precision_class_1": "float64",
+    "recall_class_0": "float64",
+    "recall_class_1": "float64",
+    "f1_class_0": "float64",
+    "f1_class_1": "float64",
+    "balanced_accuracy": "float64",
+    "matthews_corrcoef": "float64",
+    "demographic_parity": "float64",
+    "tpr_overall": "float64",
+    "fpr_overall": "float64",
+    "train_size": "object",
+    "actual_n_train": "int64",
+    "domain": "object"
+  },
+  "unique_models": [
+    "CatBoost",
+    "LightGBM",
+    "MLP",
+    "TabPFN",
+    "XGBoost"
+  ],
+  "unique_datasets": [
+    "australian",
+    "banknote-auth",
+    "kc1",
+    "ozone-level",
+    "phoneme",
+    "sick",
+    "spambase",
+    "titanic"
+  ],
+  "unique_train_sizes": [
+    "25",
+    "50",
+    "100",
+    "200",
+    "300",
+    "500",
+    "750",
+    "1000",
+    "full"
+  ],
+  "unique_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "expected_cells": 1800,
+  "duplicate_cells": 0,
+  "auc_per_model": [
+    {
+      "model": "CatBoost",
+      "mean": 0.8959805894941126,
+      "median": 0.9209501202538322,
+      "min": 0.4150829562594268,
+      "max": 1.0,
+      "std": 0.10224423094351678,
+      "count": 360
+    },
+    {
+      "model": "LightGBM",
+      "mean": 0.8709994837704861,
+      "median": 0.9082894736842104,
+      "min": 0.5,
+      "max": 1.0,
+      "std": 0.13325815696189805,
+      "count": 360
+    },
+    {
+      "model": "MLP",
+      "mean": 0.874297923179635,
+      "median": 0.8951581764009673,
+      "min": 0.3155354449472096,
+      "max": 1.0,
+      "std": 0.10815950137925377,
+      "count": 360
+    },
+    {
+      "model": "TabPFN",
+      "mean": 0.9101326089519868,
+      "median": 0.9380921052631579,
+      "min": 0.549256625727214,
+      "max": 1.0,
+      "std": 0.09137219840724616,
+      "count": 360
+    },
+    {
+      "model": "XGBoost",
+      "mean": 0.8591165203923723,
+      "median": 0.9054783886897784,
+      "min": 0.5,
+      "max": 1.0,
+      "std": 0.14992028834875976,
+      "count": 360
+    }
+  ],
+  "tabpfn_auc_by_train_size": [
+    {
+      "train_size": "100",
+      "mean": 0.8914648822208402,
+      "std": 0.09040477215116115,
+      "count": 40
+    },
+    {
+      "train_size": "1000",
+      "mean": 0.939194119637777,
+      "std": 0.06512749410776544,
+      "count": 40
+    },
+    {
+      "train_size": "200",
+      "mean": 0.9160345577328968,
+      "std": 0.07625230806293172,
+      "count": 40
+    },
+    {
+      "train_size": "25",
+      "mean": 0.8468890486747249,
+      "std": 0.1266197834684216,
+      "count": 40
+    },
+    {
+      "train_size": "300",
+      "mean": 0.9183664444721172,
+      "std": 0.07466425185413007,
+      "count": 40
+    },
+    {
+      "train_size": "50",
+      "mean": 0.8609663964518397,
+      "std": 0.11722696805062288,
+      "count": 40
+    },
+    {
+      "train_size": "500",
+      "mean": 0.9290605020517377,
+      "std": 0.07061962134733304,
+      "count": 40
+    },
+    {
+      "train_size": "750",
+      "mean": 0.9352889660787295,
+      "std": 0.0671257213699116,
+      "count": 40
+    },
+    {
+      "train_size": "full",
+      "mean": 0.9539285632472179,
+      "std": 0.05372797772026042,
+      "count": 40
+    }
+  ],
+  "tabpfn_auc_by_dataset": [
+    {
+      "dataset": "australian",
+      "mean": 0.8051784564067174,
+      "std": 0.05586253753717433,
+      "count": 45
+    },
+    {
+      "dataset": "banknote-auth",
+      "mean": 0.9998618998297559,
+      "std": 0.0006037937200329615,
+      "count": 45
+    },
+    {
+      "dataset": "kc1",
+      "mean": 0.7963029998324116,
+      "std": 0.05927730358510874,
+      "count": 45
+    },
+    {
+      "dataset": "ozone-level",
+      "mean": 0.8826067251461988,
+      "std": 0.07632954716480303,
+      "count": 45
+    },
+    {
+      "dataset": "phoneme",
+      "mean": 0.8729285605489217,
+      "std": 0.07318534630256007,
+      "count": 45
+    },
+    {
+      "dataset": "sick",
+      "mean": 0.9664493094308512,
+      "std": 0.04250106239876801,
+      "count": 45
+    },
+    {
+      "dataset": "spambase",
+      "mean": 0.9693467750163742,
+      "std": 0.020737958663358164,
+      "count": 45
+    },
+    {
+      "dataset": "titanic",
+      "mean": 0.988386145404664,
+      "std": 0.00557847180883795,
+      "count": 45
+    }
+  ],
+  "memory_col_present": true,
+  "time_col_present": true
+}

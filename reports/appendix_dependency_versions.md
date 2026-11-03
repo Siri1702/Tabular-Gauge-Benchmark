@@ -1,0 +1,32 @@
+# Appendix B — Dependency Versions
+
+Captured automatically. Reproduce with:
+
+```
+python scripts/_audit_versions.py
+```
+
+- **Python**: `3.13.5`
+- **Platform**: `Windows-11-10.0.26200-SP0`
+
+| Package | Version |
+|---|---|
+| tabpfn | `8.0.8` |
+| tabpfn-client | `0.3.2` |
+| tabular-gauge | `1.0.0` |
+| torch | `2.12.1` |
+| jax | `0.10.1` |
+| flax | `0.12.7` |
+| xgboost | `3.3.0` |
+| lightgbm | `4.6.0` |
+| catboost | `1.2.10` |
+| scikit-learn | `1.9.0` |
+| scipy | `1.18.0` |
+| optuna | `4.9.0` |
+| openml | `0.15.1` |
+| pandas | `2.3.3` |
+| numpy | `2.5.0` |
+| netcal | `1.4.0` |
+| matplotlib | `3.11.0` |
+| seaborn | `0.13.2` |
+| psutil | `7.2.2` |

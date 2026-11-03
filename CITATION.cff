@@ -1,0 +1,17 @@
+---
+cff-version: 1.2.0
+message: "Citation file for Tabular-Gauge"
+authors:
+  - family-names: "Siri"
+    given-names: "Siri1702"
+title: "Tabular-Gauge: A holistic evaluation suite for Tabular Foundation Models and traditional ML baselines"
+date-released: 2026-11-03
+url: "https://github.com/Siri1702/Tabular-Gauge"
+"""
+Cite this software using the following format:
+Siri1702. (2026). Tabular-Gauge: A holistic evaluation suite for Tabular Foundation Models and traditional ML baselines (Version 0.1.0). https://github.com/Siri1702/Tabular-Gauge
+"""
+"""
+If this software was used in the context of the associated research paper, please cite the paper as well:
+[PROVISIONAL CITATION: Author(s). (2026). Title of the research paper on Tabular Foundation Models. Venue/Journal.]
+"""
