@@ -61,15 +61,16 @@ python experiments/generate_few_shot_reports.py --csv experiments/results/few_sh
 
 Depending on your goal, please refer to the following entry points:
 
-### 🚀 For Users (Using the Toolkit)
-If you want to run benchmarks on your own data, configure models, or extend the library:
-👉 **[`USER_GUIDE.md`](USER_GUIDE.md)**
-*Includes: Setup, API Configuration for TabPFN, Custom Dataset Loading, and Result Namespacing.*
+### 📚 Documentation & Guides
+Depending on your goal, please refer to the following entry points:
 
-### 📚 General Documentation
-- **[`INDEX.md`](INDEX.md)**: The master documentation map.
-- **[`METRICS_DOCUMENTATION.md`](METRICS_DOCUMENTATION.md)**: Detailed mathematical definitions of every metric used.
-- **[`REPRODUCIBILITY.md`](REPRODUCIBILITY.md)**: Environment specifications and evaluation protocols.
+**For Practitioners (Getting Started)**
+- 👉 **[`USER_GUIDE.md`](USER_GUIDE.md)**: The definitive guide for installation, API configuration (TabPFN), custom dataset loading, and running benchmarks.
+- 👉 **[`FEW_SHOT_GUIDE.md`](FEW_SHOT_GUIDE.md)**: Specialized instructions for analyzing data efficiency and generating learning curves.
+
+**For Technical Deep-Dives**
+- **[`INDEX.md`](INDEX.md)**: The master documentation map for the entire repository.
+- **[`METRICS_DOCUMENTATION.md`](METRICS_DOCUMENTATION.md)**: Rigorous mathematical definitions and interpretation guides for every metric used.
 
 ---
 
