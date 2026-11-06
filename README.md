@@ -86,6 +86,7 @@ tabular-gauge-benchmark/
 ├── pyproject.toml         ← Project metadata and dependencies
 ├── README.md              ← Main Landing Page
 ├── USER_GUIDE.md          ← Setup & Usage Guide
+├── FEW_SHOT_GUIDE.md      ← Data-Efficiency Analysis Guide
 ├── INDEX.md               ← Documentation Map
 └── METRICS_DOCUMENTATION.md ← Detailed Metric Definitions
 ```
