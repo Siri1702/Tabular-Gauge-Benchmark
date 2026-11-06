@@ -182,7 +182,7 @@ def plot_statistical_significance_heatmap(
     """
     Square heatmap of pairwise Wilcoxon signed-rank p-values with significance
     markers in each cell. Cells are coloured by p-value so the strength of
-    evidence is visible at a glance.
+    results are visible at a glance.
     """
     all_models = sorted(set(wilcoxon_df["model_a"]).union(wilcoxon_df["model_b"]))
     p_matrix = pd.DataFrame(np.nan, index=all_models, columns=all_models)
@@ -251,7 +251,7 @@ def plot_win_loss_matrix(
     save_path: str = "reports/figures/win_loss_matrix.png",
 ):
     """
-    3-panel win / loss / tie matrix across the 15 datasets.
+    3-panel win / loss / tie matrix across the datasets.
 
     Each cell (i, j) counts how many datasets model i beat / lost to / tied
     model j when comparing the mean metric across seeds.
@@ -260,12 +260,13 @@ def plot_win_loss_matrix(
         results_df.groupby(["dataset", "model"])[metric].mean().unstack("model")
     )
 
-    # Order rows/cols by headline ranking
-    desired = ["TabPFN", "SAP-RPT-1", "CatBoost", "XGBoost", "LightGBM", "MLP"]
-    for m in desired:
+    # Dynamic ordering based on results
+    from ..evaluation.analysis import get_model_order, PREFERRED_ORDER
+    model_order = get_model_order(results_df, preferred_order=PREFERRED_ORDER)
+    for m in model_order:
         if m not in pivot.columns:
             pivot[m] = np.nan
-    pivot = pivot[desired]
+    pivot = pivot[model_order]
     models = pivot.columns.tolist()
 
     wins   = pd.DataFrame(0, index=models, columns=models, dtype=int)

@@ -1,4 +1,4 @@
 experiment:
   n_seeds: 1
-  name: smoke_test_run
+  name: my_test
   test_size: 0.2

@@ -35,7 +35,7 @@ def effective_cv_folds(y_train: np.ndarray, requested_folds: int) -> int:
     default behaviour for very small datasets) and is necessary because:
       1. The data is what it is — we cannot manufacture more minority samples.
       2. Dropping these (N, dataset) cells would bias the benchmark away
-         from the low-data / severe-imbalance regime the paper claims to cover.
+         from the low-data / severe-imbalance regime the tool is designed to cover.
       3. The fix is symmetric across all baselines (no model gets an
          unfair advantage) and affects only 2 cells in the entire
          9 × 9 × 5 × 5 = 2 025-cell matrix (sick@N=25 and ozone@N=25).

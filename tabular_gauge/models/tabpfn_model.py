@@ -33,18 +33,6 @@ except ImportError:
     ModelVersion = None
     _USE_LOCAL_TABPFN = False
 
-try:
-    from tabpfn import TabPFNClassifier
-    try:
-        from tabpfn.constants import ModelVersion
-    except ImportError:
-        ModelVersion = None
-    _USE_LOCAL_TABPFN = True
-except ImportError:
-    from tabpfn_client import TabPFNClassifier
-    ModelVersion = None
-    _USE_LOCAL_TABPFN = False
-
 # Allow TabPFN to run on CPU even when the dataset has more than 1000 samples.
 os.environ.setdefault("TABPFN_ALLOW_CPU_LARGE_DATASET", "1")
 
@@ -52,22 +40,24 @@ from .base import ModelWrapper
 
 
 class TabPFNWrapper(ModelWrapper):
-
+    """
+    Wrapper for TabPFN 3.5.
+    Leverages the massively expanded context window (1M rows, 20k features).
+    """
     def __init__(
         self,
         n_ensemble_configurations: int = 8,
-        max_context_size: int = 100000,   # Updated to v2.6 limit (100k samples)
+        max_context_size: int = 1_000_000,
         random_state: int = 42,
-        device: str = "cpu",               # Added to match config
+        device: str = "cpu",
     ):
-        super().__init__(name="TabPFN", random_state=random_state)
+        super().__init__(name="TabPFN_3.5", random_state=random_state)
         self.n_ensemble_configurations = n_ensemble_configurations
         self.max_context_size = max_context_size
         self.device = device
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
         n_original = len(X_train)
-        actual_context_size = min(len(X_train), self.max_context_size)
 
         if len(X_train) > self.max_context_size:
             X_train, y_train = self._subsample_balanced(
@@ -79,13 +69,24 @@ class TabPFNWrapper(ModelWrapper):
         self.context_original_ = n_original
         self.was_subsampled_ = n_original > self.max_context_size
 
-        if _USE_LOCAL_TABPFN:
-            self._model = TabPFNClassifier(
-                n_estimators=self.n_ensemble_configurations,
-                device="cpu",
-                random_state=self.random_state,
-                ignore_pretraining_limits=True,
-            )
+        if _USE_LOCAL_TABPFN and ModelVersion:
+            version = ModelVersion.V3 if hasattr(ModelVersion, 'V3') else ModelVersion.V2_6
+            try:
+                self._model = TabPFNClassifier.create_default_for_version(version)
+                if hasattr(self._model, 'n_estimators'):
+                    self._model.n_estimators = self.n_ensemble_configurations
+                os.environ["TABPFN_ALLOW_CPU_LARGE_DATASET"] = "1"
+                if hasattr(self._model, 'device'):
+                    self._model.device = "cpu"
+                if hasattr(self._model, 'ignore_pretraining_limits'):
+                    self._model.ignore_pretraining_limits = True
+            except Exception:
+                self._model = TabPFNClassifier(
+                    n_estimators=self.n_ensemble_configurations,
+                    device="cpu",
+                    random_state=self.random_state,
+                    ignore_pretraining_limits=True,
+                )
         else:
             self._model = TabPFNClassifier(
                 n_estimators=self.n_ensemble_configurations,
@@ -116,16 +117,15 @@ class TabPFNWrapper(ModelWrapper):
         rng = np.random.RandomState(self.random_state)
         classes, counts = np.unique(y, return_counts=True)
         per_class = n // len(classes)
-
         indices = []
         for cls in classes:
             cls_idx = np.where(y == cls)[0]
             take = min(per_class, len(cls_idx))
             indices.append(rng.choice(cls_idx, size=take, replace=False))
-
         idx = np.concatenate(indices)
         rng.shuffle(idx)
         return X[idx], y[idx]
+
 
 
 class TabPFN35Wrapper(TabPFNWrapper):

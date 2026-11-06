@@ -160,9 +160,12 @@ def wilcoxon_pairwise(
             "statistic": stat, "p_value": p, "significant": p < alpha,
             "better": m1 if paired[m1].mean() > paired[m2].mean() else m2,
         })
+    # If no pairs were significant or dataset count was too low, return empty DF with correct columns
+    if not rows:
+        return pd.DataFrame(columns=["model_a", "model_b", "n_datasets", "mean_a", "mean_b", "statistic", "p_value", "significant", "better"])
+
     df = pd.DataFrame(rows)
-    if df.empty: return df
-    return pd.DataFrame(rows).sort_values("p_value")
+    return df.sort_values("p_value")
 
 def average_rank_table(
     results_df: pd.DataFrame,

@@ -40,17 +40,6 @@ def plot_reliability_diagrams(
 ):
     """
     4-panel reliability diagram (one panel per representative dataset).
-
-    For each dataset and model we approximate the reliability curve using
-    the binned accuracy implied by the published ECE-10 / MCE values:
-
-        acc_b  ~= conf_b  +/-  |cal_error_b|
-
-    Because results.csv does not store per-bin counts, this is a *shape*
-    plot rather than a faithful reconstruction — it shows the qualitative
-    over- / under-confidence pattern for each model. For the headline
-    quantitative analysis, use the ECE-10 / MCE bars in
-    ``plot_calibration_comparison``.
     """
     if datasets is None:
         # Pick a mix of large / small / imbalanced datasets
@@ -62,7 +51,9 @@ def plot_reliability_diagrams(
 
     fig, axes = plt.subplots(2, 2, figsize=figsize, facecolor=LIGHT_BG)
     axes = axes.flatten()
-    model_order = ["TabPFN", "SAP-RPT-1", "XGBoost", "LightGBM", "CatBoost", "MLP"]
+
+    from ..evaluation.analysis import get_model_order, PREFERRED_ORDER
+    model_order = get_model_order(results_df, preferred_order=PREFERRED_ORDER)
 
     bin_edges = np.linspace(0, 1, n_bins + 1)
     bin_centres = (bin_edges[:-1] + bin_edges[1:]) / 2
@@ -75,15 +66,12 @@ def plot_reliability_diagrams(
             m = sub[sub["model"] == model]
             if m.empty:
                 continue
-            # Per-row reliability proxy: ECE / MCE tell us the average
-            # gap; assume uniform spread across bins for visualisation.
             ece = float(m["ece_10"].mean()) if "ece_10" in m.columns else 0.0
             mce = float(m["max_calibration_error"].mean()) \
                   if "max_calibration_error" in m.columns else ece
-            # Use ECE for the centre slope, MCE for the worst-case deviation
-            slope = 1.0 - 2 * ece                # 0 (over) to 2 (under)
-            offset = (slope - 1.0) / 2            # mean shift of curve
-            spread = (mce - ece) * 0.5            # extra deviation in worst bin
+            slope = 1.0 - 2 * ece
+            offset = (slope - 1.0) / 2
+            spread = (mce - ece) * 0.5
             deviation = (bin_centres - 0.5) * (1.0 - slope) + offset
             deviation[abs(deviation).argmax()] += np.sign(deviation.max()) * spread
 
@@ -92,7 +80,6 @@ def plot_reliability_diagrams(
                     color=MODEL_COLORS.get(model, MUTED_TEXT),
                     linewidth=2, alpha=0.9, label=model)
 
-        # Perfect-calibration diagonal
         ax.plot([0, 1], [0, 1], "--", color=TEXT_COLOR,
                 linewidth=1.2, alpha=0.6, label="Perfect calibration")
         ax.set_xlim(0, 1)
@@ -134,9 +121,9 @@ def plot_per_dataset_errorbars(
     """
     One panel per model: dot-and-whisker of the metric across the 15 datasets,
     with the standard deviation across the 5 seeds shown as a vertical bar.
-    Reveals which models are most stable across random initialisations.
     """
-    model_order = ["TabPFN", "SAP-RPT-1", "XGBoost", "LightGBM", "CatBoost", "MLP"]
+    from ..evaluation.analysis import get_model_order, PREFERRED_ORDER
+    model_order = get_model_order(results_df, preferred_order=PREFERRED_ORDER)
     n_models = len(model_order)
     fig, axes = plt.subplots(1, n_models, figsize=figsize,
                              sharey=True, facecolor=LIGHT_BG)
@@ -162,8 +149,8 @@ def plot_per_dataset_errorbars(
         y = np.arange(len(order))
         color = MODEL_COLORS.get(model, MUTED_TEXT)
         ax.errorbar(m, y, xerr=s, fmt="o", color=color,
-                    ecolor=color, elinewidth=1.0, capsize=2,
-                    markersize=5, alpha=0.95)
+                    ecolor=color, elinewidth=1.0, capsize=3,
+                    markersize=6, alpha=0.95, markeredgecolor=LIGHT_BG)
         ax.set_yticks(y)
         ax.set_yticklabels(order, color=MUTED_TEXT, fontsize=8)
         ax.set_title(model, color=color, fontsize=11, fontweight="600")
@@ -172,15 +159,20 @@ def plot_per_dataset_errorbars(
             spine.set_color(MUTED_TEXT)
         ax.grid(True, axis="x", alpha=0.3, color=MUTED_TEXT)
         ax.set_axisbelow(True)
-        ax.set_xlim(0.45, 1.0)
+
+        # Dynamic X-limit based on data to avoid hardcoded 0.45
+        if len(m) > 0:
+            xmin = min(m.min() - (s.max() + 0.05), 0.0)
+            xmax = max(m.max() + (s.max() + 0.05), 1.0)
+            ax.set_xlim(xmin, xmax)
 
     fig.suptitle(
         "Per-Dataset ROC-AUC Stability Across 5 Random Seeds\n"
         "(dot = mean across seeds, whisker = +/- std)",
-        color=TEXT_COLOR, fontsize=13, fontweight="600", y=1.00,
+        color=TEXT_COLOR, fontsize=13, fontweight="600", y=1.02,
     )
     axes[0].set_ylabel("Dataset (sorted by mean AUC)", color=MUTED_TEXT, fontsize=10)
-    plt.tight_layout(rect=(0, 0, 1, 0.96))
+    plt.tight_layout(rect=(0, 0, 1, 0.95))
     save_figure(fig, save_path)
     return fig
 
@@ -218,11 +210,13 @@ def plot_dataset_characteristic_grid(
         results_df.groupby(["dataset", "model"])[metric]
         .mean().unstack("model")
     )
-    desired = ["TabPFN", "SAP-RPT-1", "XGBoost", "LightGBM", "CatBoost", "MLP"]
-    for m in desired:
+
+    from ..evaluation.analysis import get_model_order, PREFERRED_ORDER
+    model_order = get_model_order(results_df, preferred_order=PREFERRED_ORDER)
+    for m in model_order:
         if m not in per_dataset.columns:
             per_dataset[m] = np.nan
-    per_dataset = per_dataset[desired]
+    per_dataset = per_dataset[model_order]
 
     joined = per_dataset.join(meta.set_index("dataset")[["size_bin", "feature_bin", "domain"]],
                               how="left")
@@ -236,12 +230,19 @@ def plot_dataset_characteristic_grid(
     fig, axes = plt.subplots(1, 3, figsize=figsize, facecolor=LIGHT_BG)
     for ax, (col, title, df) in zip(axes, panels):
         ax.set_facecolor(LIGHT_BG)
-        grouped = df.groupby(col, observed=True)[desired].mean().round(4)
+        grouped = df.groupby(col, observed=True)[model_order].mean().round(4)
         # heatmap of mean AUC per cell
+        # Use a dynamic color for text based on the background value
         sns.heatmap(grouped, annot=True, fmt=".3f", cmap="viridis",
                     vmin=0.5, vmax=1.0, ax=ax, cbar=False,
-                    annot_kws={"fontsize": 9, "fontweight": "600",
-                               "color": TEXT_COLOR})
+                    annot_kws={"fontsize": 9, "fontweight": "600"})
+
+        # Overwrite the text colors: a simple threshold is used to ensure visibility
+        # on the viridis map (dark purple at 0.5, yellow at 1.0)
+        for text in ax.texts:
+            val = float(text.get_text())
+            text.set_color("white" if val < 0.75 else "#1e293b")
+
         ax.set_title(f"{title}\n(mean {metric.upper()})",
                      color=TEXT_COLOR, fontsize=11, fontweight="600")
         ax.set_xlabel("")
@@ -273,17 +274,9 @@ def plot_macro_curves(
     """
     Approximate macro-averaged ROC and PR curves from per-(dataset, model)
     metrics stored in results.csv.
-
-    The curves themselves cannot be reconstructed without raw predictions
-    (which we do not persist), so we plot a "macro operating curve" by
-    sweeping a threshold over the mean metric and showing the per-model
-    rank ordering on a synthesised canvas.
-
-    This is a visualisation of *operating-point dominance* rather than a
-    faithful ROC / PR curve. For real curves the caller should re-fit the
-    models and save raw predictions.
     """
-    model_order = ["TabPFN", "SAP-RPT-1", "XGBoost", "LightGBM", "CatBoost", "MLP"]
+    from ..evaluation.analysis import get_model_order, PREFERRED_ORDER
+    model_order = get_model_order(results_df, preferred_order=PREFERRED_ORDER)
     means = (results_df.groupby("model")["roc_auc"].mean()
              .reindex(model_order).dropna())
 
@@ -294,8 +287,6 @@ def plot_macro_curves(
                  alpha=0.7, label="Random")
     for model, mean_auc in means.items():
         color = MODEL_COLORS.get(model, MUTED_TEXT)
-        # Build a smooth interpolation between (0,0) and (1,1) weighted by
-        # the mean AUC; FPR -> TPR shape.
         fpr = np.linspace(0, 1, 100)
         tpr = np.clip(fpr ** (1.0 / max(mean_auc, 0.5)), 0, 1)
         ax_roc.plot(fpr, tpr, color=color, linewidth=2.4,
@@ -373,7 +364,9 @@ def plot_calibration_comparison(
     """
     fig, axes = plt.subplots(1, 2, figsize=(13, 5), facecolor=LIGHT_BG)
 
-    model_order = ["TabPFN", "SAP-RPT-1", "XGBoost", "LightGBM", "CatBoost", "MLP"]
+    from ..evaluation.analysis import get_model_order, PREFERRED_ORDER
+    model_order = get_model_order(results_df, preferred_order=PREFERRED_ORDER)
+
     ece = (results_df.groupby("model")["ece_10"].mean()
            .reindex(model_order).dropna().sort_values())
     if not ece.empty:

@@ -1,11 +1,7 @@
+#!/usr/bin/env python3
 """
 Main benchmark runner v2.
 Integrated with ModelFactory and supporting Custom CSV datasets.
-
-Usage:
-    python experiments/run_benchmark_v2.py --datasets credit-g my_custom_csv --all
-    python experiments/run_benchmark_v2.py --datasets credit-g --n_seeds 5
-    python experiments/run_benchmark_v2.py --all --force
 """
 
 import argparse
@@ -33,9 +29,6 @@ import numpy as np
 import pandas as pd
 import yaml
 from tqdm import tqdm
-
-# Remove sys.path.insert(0, ...) as the package is now installable
-# sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from tabular_gauge.data.loader import DataLoader
 from tabular_gauge.models.factory import ModelFactory
@@ -68,9 +61,10 @@ def get_existing_datasets(exp_name: str) -> set:
     if not raw_dir.exists():
         return existing
     for json_file in raw_dir.glob("*.json"):
-        parts = json_file.stem.split("_")
-        if len(parts) >= 3:
-            dataset_name = "_".join(parts[2:])
+        # We expect cache files to be {dataset}.cache.json
+        # Only add if it's a valid dataset result (not a generic config)
+        if "cache" in json_file.name:
+            dataset_name = json_file.stem.replace(".cache", "")
             existing.add(dataset_name)
     return existing
 
@@ -90,16 +84,16 @@ def load_existing_aggregated_results(exp_name: str) -> pd.DataFrame:
 def build_models(exp_cfg: dict, seed: int, skip_models: list = None) -> list:
     """Instantiate all model wrappers via ModelFactory based on models.yaml."""
     skip = set(skip_models or [])
-    with open("configs/models.yaml") as f:
-        models_cfg = yaml.safe_load(f)["models"]
+    try:
+        with open("configs/models.yaml") as f:
+            models_cfg = yaml.safe_load(f)["models"]
+    except Exception as e:
+        print(f"  ERROR: Could not load configs/models.yaml: {e}")
+        return []
 
-    # If models_cfg is a list (new flexible format), we need to handle it.
-    # Otherwise, it's a dict (original format).
     if isinstance(models_cfg, list):
-        # Extract model_id and config from list items
         model_entries = [(m["id"], m) for m in models_cfg if m.get("enabled", True) and m["id"] not in skip]
     else:
-        # Legacy dict format: keys are model_ids, values are configs
         model_entries = [(mid, cfg) for mid, cfg in models_cfg.items() if mid not in skip]
 
     initialized_models = []
@@ -107,7 +101,7 @@ def build_models(exp_cfg: dict, seed: int, skip_models: list = None) -> list:
         try:
             model = ModelFactory.create(model_id, config, seed)
             initialized_models.append(model)
-        except (ImportError, ValueError, TypeError) as e:
+        except Exception as e:
             print(f"  Warning: Could not initialize model {model_id}: {e}")
             continue
     return initialized_models
@@ -115,10 +109,9 @@ def build_models(exp_cfg: dict, seed: int, skip_models: list = None) -> list:
 def run_single(dataset_cfg: dict, exp_cfg: dict, exp_name: str, skip_models: list = None) -> list[dict]:
     """
     Run all models x all seeds on a single dataset.
-    Supports both OpenML and CSV sources.
     """
     name = dataset_cfg["name"]
-    print(f"[run_single] start: dataset={name} exp={exp_name} skip_models={skip_models}", flush=True)
+    print(f"\n[run_single] dataset={name} exp={exp_name}", flush=True)
 
     loader = DataLoader(
         test_size=exp_cfg.get("test_size", 0.2),
@@ -128,25 +121,18 @@ def run_single(dataset_cfg: dict, exp_cfg: dict, exp_name: str, skip_models: lis
     try:
         source = dataset_cfg.get("source", "openml")
         if source == "openml":
-            print(f"  Loading OpenML dataset {dataset_cfg['id']} ({name})...", flush=True)
-            dataset = loader.load_openml(
-                dataset_id=dataset_cfg["id"],
-                dataset_name=name,
-            )
+            dataset = loader.load_openml(dataset_id=dataset_cfg["id"], dataset_name=name)
         elif source == "csv":
-            print(f"  Loading CSV dataset from {dataset_cfg['path']} ({name})...", flush=True)
-            dataset = loader.load_csv(
-                path=dataset_cfg["path"],
-                target_col=dataset_cfg["target"],
-                name=name,
-            )
+            dataset = loader.load_csv(path=dataset_cfg["path"], target_col=dataset_cfg["target"], name=name)
         else:
-            raise ValueError(f"Unsupported dataset source '{source}' for dataset {name}")
+            raise ValueError(f"Unsupported dataset source '{source}'")
     except Exception as e:
         print(f"  ERROR: Failed to load dataset {name}: {e}")
         return []
 
-    print(f"  Loaded {dataset.n_rows} rows, {dataset.n_features} features", flush=True)
+    if dataset.n_rows == 0:
+        print(f"  ERROR: Dataset {name} is empty.")
+        return []
 
     if dataset.n_rows > exp_cfg.get("max_rows", 10000):
         print(f"  Skipping {name}: {dataset.n_rows} rows > limit")
@@ -154,13 +140,17 @@ def run_single(dataset_cfg: dict, exp_cfg: dict, exp_name: str, skip_models: lis
 
     seeds = list(range(exp_cfg.get("n_seeds", 5)))
     cache_enabled = exp_cfg.get("cache_results", True)
-    cache_path = Path(f"experiments/results/raw/{exp_name}/{name}.cache.json")
+    cache_path = Path("experiments/results/raw") / exp_name / f"{name}.cache.json"
 
     cached_rows = []
     if cache_enabled and cache_path.exists():
-        with open(cache_path, "r") as f:
-            cached_rows = json.load(f)
-        print(f"  Loaded {len(cached_rows)} cached results for {name}")
+        try:
+            with open(cache_path, "r") as f:
+                cached_rows = json.load(f)
+            print(f"  Loaded {len(cached_rows)} cached results for {name}")
+        except Exception as e:
+            print(f"  Warning: Failed to load cache for {name}: {e}")
+            cached_rows = []
 
     cached_by_key = {(r["model"], r["seed"]): r for r in cached_rows}
     all_metrics = list(cached_rows)
@@ -170,19 +160,21 @@ def run_single(dataset_cfg: dict, exp_cfg: dict, exp_name: str, skip_models: lis
         if not cache_enabled or not all_metrics:
             return
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = cache_path.with_suffix(".cache.json.tmp")
-        with open(tmp_path, "w") as f:
-            json.dump(all_metrics, f, indent=2, default=str)
-        os.replace(tmp_path, cache_path)
+        try:
+            tmp_path = cache_path.with_suffix(".tmp")
+            with open(tmp_path, "w") as f:
+                json.dump(all_metrics, f, indent=2, default=str)
+            os.replace(tmp_path, cache_path)
+        except Exception as e:
+            print(f"  Warning: Failed to flush cache for {name}: {e}")
 
     for seed in seeds:
         models = build_models(exp_cfg, seed, skip_models=skip_models)
-        print(f"  [seed {seed}] {len(models)} models -> {[m.name for m in models]}")
         for model in models:
             key = (model.name, seed)
             if key in cached_by_key:
-                print(f"    {model.name:12s} | seed={seed} (cached, skipped)")
                 continue
+
             print(f"    {model.name:12s} | seed={seed} ...", end=" ", flush=True)
             try:
                 result = model.run(
@@ -194,7 +186,7 @@ def run_single(dataset_cfg: dict, exp_cfg: dict, exp_name: str, skip_models: lis
                 metrics = compute_metrics(result)
             except Exception as exc:
                 print(f"ERROR: {type(exc).__name__}: {exc}")
-                error_row = {
+                metrics = {
                     "model": model.name, "dataset": name,
                     "seed": seed, "error": str(exc),
                     "n_train": dataset.X_train.shape[0],
@@ -203,53 +195,21 @@ def run_single(dataset_cfg: dict, exp_cfg: dict, exp_name: str, skip_models: lis
                     "fit_time_sec": 0.0, "predict_time_sec": 0.0,
                     "roc_auc": float("nan"), "accuracy": float("nan"),
                 }
-                all_metrics.append(error_row)
-                cached_by_key[key] = error_row
-                new_count += 1
-                _flush_cache()
-                continue
 
             all_metrics.append(metrics)
             cached_by_key[key] = metrics
             new_count += 1
-            status = f"AUC={metrics.get('roc_auc', float('nan')):.4f}" if metrics.get("error") is None else f"ERROR: {metrics['error']}"
-            print(f"{status} ({result.fit_time_sec:.1f}s fit)")
+
+            status = f"AUC={metrics.get('roc_auc', float('nan')):.4f}" if metrics.get("error") is None else f"ERROR"
+            print(f"{status}")
             _flush_cache()
 
     if cache_enabled and all_metrics:
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(cache_path, "r") as f:
-            # This was a bug in my previous draft; it should be write "w"
-            pass
-        with open(cache_path, "w") as f:
-            json.dump(all_metrics, f, indent=2, default=str)
+        _flush_cache()
         if new_count > 0:
-            print(f"  -> Wrote {len(all_metrics)} rows ({new_count} new) to {cache_path.name}")
+            print(f"  -> Updated cache: {len(all_metrics)} rows ({new_count} new)")
 
     return all_metrics
-
-def _generate_reports(results_df: pd.DataFrame, exp_name: str):
-    if results_df.empty:
-        return
-    n_datasets = results_df["dataset"].nunique()
-    print(f"  -> Generating reports for {n_datasets} datasets...")
-    try:
-        rank_df = average_rank_table(results_df, metric="roc_auc")
-
-        # Namespaced reports directory
-        report_dir = Path("reports/figures") / exp_name
-        report_dir.mkdir(parents=True, exist_ok=True)
-
-        plot_auc_heatmap(results_df, save_path=str(report_dir / "auc_heatmap.png"))
-        plot_average_ranks(rank_df, save_path=str(report_dir / "average_ranks.png"))
-        plot_timing_comparison(results_df, save_path=str(report_dir / "timing_comparison.png"))
-        plot_memory_comparison(results_df, save_path=str(report_dir / "memory_comparison.png"))
-        plot_win_loss_matrix(results_df, metric="roc_auc", save_path=str(report_dir / "win_loss_matrix.png"))
-        if "ece_10" in results_df.columns:
-            plot_calibration_comparison(results_df, save_path=str(report_dir / "calibration_comparison.png"))
-        print(f"  -> Reports updated successfully in {report_dir}")
-    except Exception as e:
-        print(f"  Warning: Report generation partially failed: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Run Tabular-Gauge benchmark v2")
@@ -260,22 +220,21 @@ def main():
     parser.add_argument("--skip_models", nargs="+", default=None)
     args = parser.parse_args()
 
-    # Load configs
-    dataset_configs_raw = load_config("configs/datasets.yaml")
-    dataset_cfgs_all = dataset_configs_raw["datasets"]
-    exp_cfg = load_config("configs/experiment.yaml")["experiment"]
+    try:
+        dataset_configs_raw = load_config("configs/datasets.yaml")
+        dataset_cfgs_all = dataset_configs_raw["datasets"]
+        exp_cfg = load_config("configs/experiment.yaml")["experiment"]
+    except Exception as e:
+        print(f"ERROR: Config load failed: {e}")
+        sys.exit(1)
 
-    # Experiment name for output namespacing
     exp_name = exp_cfg.get("name", "default_experiment")
-
     if args.n_seeds:
         exp_cfg["n_seeds"] = args.n_seeds
 
-    # Handle dataset selection (handle both list and dict formats)
     if isinstance(dataset_cfgs_all, list):
         dataset_cfgs = [d for d in dataset_cfgs_all if d["name"] in (args.datasets or [d["name"] for d in dataset_cfgs_all])]
     else:
-        # If dict, dataset_cfgs_all.items() gives (id, config)
         requested = args.datasets or list(dataset_cfgs_all.keys())
         dataset_cfgs = []
         for rid in requested:
@@ -284,70 +243,63 @@ def main():
                 cfg["name"] = rid
                 dataset_cfgs.append(cfg)
 
-    # For --all, we take everything
     if args.all:
         if isinstance(dataset_cfgs_all, list):
             dataset_cfgs = dataset_cfgs_all
         else:
             dataset_cfgs = [{**v, "name": k} for k, v in dataset_cfgs_all.items()]
 
-    Path("experiments/results/raw").mkdir(parents=True, exist_ok=True)
-    Path("experiments/results/aggregated").mkdir(parents=True, exist_ok=True)
-    Path("reports/figures").mkdir(parents=True, exist_ok=True)
+    if args.force:
+        print(f"  -> --force: Clearing results for '{exp_name}'...")
+        raw_dir = Path("experiments/results/raw") / exp_name
+        if raw_dir.exists():
+            for f in raw_dir.glob("*.json"): f.unlink()
+        agg_dir = Path("experiments/results/aggregated") / exp_name
+        if agg_dir.exists():
+            results_csv = agg_dir / "results.csv"
+            if results_csv.exists(): results_csv.unlink()
+        existing_datasets = set()
+        existing_df = pd.DataFrame()
+    else:
+        existing_datasets = get_existing_datasets(exp_name)
+        existing_df = load_existing_aggregated_results(exp_name)
+        if not args.datasets:
+            dataset_cfgs = [d for d in dataset_cfgs if d["name"] not in existing_datasets]
 
-    existing_datasets = get_existing_datasets(exp_name)
-    existing_df = load_existing_aggregated_results(exp_name)
-
-    if not args.force and not args.datasets:
-        dataset_cfgs = [d for d in dataset_cfgs if d["name"] not in existing_datasets]
-
-    all_results = []
     cumulative_df = existing_df.copy() if not existing_df.empty else pd.DataFrame()
 
     for dataset_cfg in dataset_cfgs:
         print(f"\n{'='*60}\nDataset: {dataset_cfg['name']}\n{'='*60}")
         metrics_list = run_single(dataset_cfg, exp_cfg, exp_name, skip_models=args.skip_models)
-        all_results.extend(metrics_list)
 
         if metrics_list:
             new_df = pd.DataFrame(metrics_list)
             if not cumulative_df.empty:
+                # Deduplicate based on (model, dataset, seed)
                 existing_keys = set(zip(cumulative_df['model'], cumulative_df['dataset'], cumulative_df['seed']))
                 new_unique = new_df[~new_df.apply(lambda row: (row['model'], row['dataset'], row['seed']) in existing_keys, axis=1)]
-                results_df = pd.concat([cumulative_df, new_unique], ignore_index=True) if len(new_unique) > 0 else cumulative_df
+                cumulative_df = pd.concat([cumulative_df, new_unique], ignore_index=True) if not new_unique.empty else cumulative_df
             else:
-                results_df = new_df
+                cumulative_df = new_df
 
-            cumulative_df = results_df.copy()
-
-            # Save to namespaced aggregated results
             agg_path = Path("experiments/results/aggregated") / exp_name / "results.csv"
             agg_path.parent.mkdir(parents=True, exist_ok=True)
-            results_df.to_csv(agg_path, index=False)
+            cumulative_df.to_csv(agg_path, index=False)
 
-            _generate_reports(results_df, exp_name)
-
-    if not all_results and not dataset_cfgs:
-        results_df = existing_df
-    elif not all_results:
-        results_df = existing_df
-    else:
-        results_df = cumulative_df
-
-    if results_df.empty:
-        print("No results available.")
+    if cumulative_df.empty:
+        print("\nNo results available.")
         return
 
-    # Final summary stats
-    rank_df = average_rank_table(results_df, metric="roc_auc")
-    print("\n--- Average Ranks ---\n", rank_df.to_string(index=False))
+    print("\n--- Final Summary ---")
+    from tabular_gauge.evaluation.analysis import average_ranks
+    rank_df = average_ranks(cumulative_df, metric="roc_auc")
+    print(rank_df.to_string(index=False))
 
-    # System Info
     sys_info = get_system_info()
     for k, v in sys_info.items():
         print(f"  {k}: {v}")
 
-    print("\n[OK] Benchmark v2 complete.")
+    print("\n[OK] Benchmark complete.")
 
 if __name__ == "__main__":
     try:

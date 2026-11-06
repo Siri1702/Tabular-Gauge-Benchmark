@@ -171,5 +171,5 @@ python experiments/run_benchmark.py --all
 
 To regenerate reports from existing CSVs:
 ```bash
-python experiments/regenerate_report.py
+python experiments/generate_reports.py
 ```

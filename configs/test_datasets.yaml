@@ -1,1 +1,0 @@
-datasets: [ { name: synthetic_test, source: csv, path: data/synthetic_test.csv, target: target } ]

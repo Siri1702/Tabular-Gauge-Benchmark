@@ -5,7 +5,7 @@ This module provides comprehensive learning curve analysis:
 - Tests models at multiple training set sizes (50, 100, 200, 500, 1000, full)
 - Identifies crossover points where model rankings change
 - Provides data efficiency analysis
-- Generates publication-ready visualizations
+- Generates professional visualizations
 """
 
 import sys

@@ -1,1 +1,0 @@
-models: { tabpfn: { class: tabular_gauge.models.tabpfn_model.TabPFNWrapper, tunable: false } }

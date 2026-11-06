@@ -1,9 +1,0 @@
-{
-  "crossover_at": "3000",
-  "prev_size": "2000",
-  "tabpfn_before": 0.908189733918172,
-  "xgb_before": 0.9076324253275558,
-  "tabpfn_at": 0.9089907732835844,
-  "xgb_at": 0.910597111331291,
-  "description": "XGBoost starts beating TabPFN at N=3000"
-}

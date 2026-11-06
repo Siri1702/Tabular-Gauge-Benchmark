@@ -1,5 +1,5 @@
 """
-Centralised matplotlib style for publication-grade figures.
+Centralised matplotlib style for professional-grade figures.
 
 IEEE publishes in B&W but accepts colour for the digital version. The figures
 in this project use a clean light theme that survives both greyscale printing
@@ -12,7 +12,7 @@ single change here propagates everywhere.
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 # ---------------------------------------------------------------------------
 # Colour palette
@@ -28,6 +28,9 @@ MODEL_COLORS = {
     "MLP":       "#06b6d4",   # cyan
 }
 
+# Fallback palette for models not in MODEL_COLORS
+GENERIC_PALETTE = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f97316", "#eab308", "#22c55e", "#06b6d4"]
+
 # Light-theme palette (IEEE-friendly)
 LIGHT_BG       = "#ffffff"
 LIGHT_SURFACE  = "#f8fafc"
@@ -40,21 +43,15 @@ ACCENT3        = "#10b981"
 WARN           = "#f59e0b"
 ERROR          = "#ef4444"
 
-
 # ---------------------------------------------------------------------------
 # rcParams
 # ---------------------------------------------------------------------------
-# DPI: 200 — IEEE column width is 3.5 in, so 200 dpi gives 700px which is
-# sharp on screen and acceptable in print.
-DEFAULT_DPI = 200
-
+# DPI: 300 — standard for high-quality research publications.
+DEFAULT_DPI = 300
 
 def apply_style(theme: str = "light") -> None:
     """
     Apply a coherent style to all matplotlib output.
-
-    Args:
-        theme: "light" (default, IEEE-friendly) or "dark" (legacy).
     """
     if theme == "light":
         bg = LIGHT_BG
@@ -98,19 +95,18 @@ def apply_style(theme: str = "light") -> None:
     }
     mpl.rcParams.update(rc)
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def color_for_model(model_name: str) -> str:
-    """Return the canonical colour for a model name (with fallback)."""
-    return MODEL_COLORS.get(model_name, MUTED_TEXT)
-
+def color_for_model(model_name: str, index: int = 0) -> str:
+    """Return the canonical colour for a model name (with cyclic fallback)."""
+    if model_name in MODEL_COLORS:
+        return MODEL_COLORS[model_name]
+    return GENERIC_PALETTE[index % len(GENERIC_PALETTE)]
 
 def palette(models: list) -> list:
     """Return the colour for each model in the given order."""
-    return [color_for_model(m) for m in models]
-
+    return [color_for_model(m, i) for i, m in enumerate(models)]
 
 def save_figure(fig, save_path: str, **kwargs) -> None:
     """
@@ -128,7 +124,6 @@ def save_figure(fig, save_path: str, **kwargs) -> None:
     fig.savefig(save_path, **extra)
     plt.close(fig)
     print(f"  Saved figure -> {save_path}")
-
 
 # Apply the default style on import so any module that uses matplotlib picks
 # it up automatically.

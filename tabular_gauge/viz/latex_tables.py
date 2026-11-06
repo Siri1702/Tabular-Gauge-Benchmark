@@ -1,7 +1,7 @@
 """
 LaTeX Table Generator for Publication-Ready Results.
 
-This module generates LaTeX tables from benchmark results for paper submission.
+This module generates LaTeX tables from benchmark results for professional reporting.
 Supports:
 - Main results table (ROC-AUC by dataset)
 - Timing comparison table

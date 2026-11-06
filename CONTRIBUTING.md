@@ -1,6 +1,6 @@
 # Contributing to Tabular-Gauge Benchmark
 
-Thank you for your interest in contributing! This project welcomes contributions from researchers and practitioners interested in benchmarking tabular ML approaches.
+Thank you for your interest in contributing! This project welcomes contributions from developers and practitioners interested in benchmarking tabular ML approaches.
 
 ## 🚀 How to Contribute
 
@@ -183,11 +183,11 @@ When adding new benchmark results:
 
 ## 🙏 Acknowledgments
 
-Contributions, feedback, and ideas are all welcome! This benchmark is meant to be a community resource for the tabular ML research community.
+Contributions, feedback, and ideas are all welcome! This benchmark is meant to be a community resource for the tabular ML community.
 
 ### Contributor Spotlight
 
-*Contributions to this project, including the initial addition of the SAP-RPT-1 model for research benchmarks, are greatly appreciated.*
+*Contributions to this project are greatly appreciated.*
 
 ---
 

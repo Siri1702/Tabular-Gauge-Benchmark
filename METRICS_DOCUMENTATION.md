@@ -8,7 +8,7 @@ This guide is the single, authoritative reference for every metric, statistical 
 
 Most tabular benchmarks suffer from "Metric Tunnel Vision," focusing only on predictive accuracy (e.g., ROC-AUC). Tabular-Gauge addresses this by evaluating models across **three orthogonal dimensions**. 
 
-A model that wins on AUC but fails on calibration or latency is often a liability in production. We provide a "Full Utility" picture to help practitioners decide: *"Is a Foundation Model's zero-shot speed worth a slight drop in calibration compared to a tuned GBDT?"*
+A model that wins on AUC but fails on calibration or latency is often a liability in production. We provide a "Full Utility" picture to help practitioners decide which model best fits their specific constraints.
 
 ### 📊 The Evidence Layers
 
@@ -27,8 +27,8 @@ A model that wins on AUC but fails on calibration or latency is often a liabilit
 **What is it?** The probability that a randomly chosen positive sample is ranked higher than a randomly chosen negative sample.
 **Why it matters**: It is **threshold-free**. It measures the model's ability to separate classes regardless of the decision cut-off you choose.
 **Interpretation**:
-- `0.9 - 1.0`: Excellent (Deploy-ready).
-- `0.8 - 0.9`: Good (Useful, but may need calibration).
+- `0.9 - 1.0`: Excellent.
+- `0.8 - 0.9`: Good.
 - `0.5`: Random guessing.
 
 ### 2.2 PR-AUC / Average Precision
@@ -36,14 +36,14 @@ A model that wins on AUC but fails on calibration or latency is often a liabilit
 **Why it matters**: ROC-AUC can be overly optimistic on highly imbalanced data. PR-AUC is more sensitive to the positive class and is critical for fraud or rare-disease detection.
 
 ### 2.3 F1-Macro & Balanced Accuracy
-**What is it?** The harmonic mean of precision/recall and the average of sensitivity/specificity.
-**Why it matters**: These are **threshold-dependent** (usually at 0.5). They answer: *"If I deploy this model as-is, how will it perform?"*
+**What is it?** F1-Macro is the arithmetic mean of F1 scores for each class; Balanced Accuracy is the average of sensitivity and specificity.
+**Why it matters**: These are **threshold-dependent** (usually at 0.5). They answer: *"If I deploy this model as-is, how will it perform?"* unlike AUC, they account for the specific class distribution.
 
 ---
 
 ## ⚖️ 3. Calibration Metrics (Truthfulness)
 
-A model can have a perfect ROC-AUC but be "confidently wrong." Calibration tells us if the probability $p=0.8$ actually means an 80% chance of success.
+A model can have a perfect ROC-AUC but be "confidently wrong." Calibration tells us if the predicted probability $p=0.8$ actually means an 80% chance of success.
 
 ### 3.1 Expected Calibration Error (ECE)
 **What is it?** The weighted average difference between predicted confidence and empirical accuracy across bins.
@@ -65,7 +65,7 @@ These metrics capture the "Hidden Cost" of ML.
 
 | Metric | Description | Practical Impact |
 |---|---|---|
-| `tuning_time_sec` | Time spent in Optuna search | Zero for Foundation Models; high for GBDTs. |
+| `tuning_time_sec` | Time spent in Optuna search | High for GBDTs; Zero for Zero-Shot models. |
 | `fit_time_sec` | Time to train the model | One-time deployment cost. |
 | `predict_time_sec` | Inference time per sample | Determines real-time latency. |
 | `peak_memory_mb` | Max RAM usage | Determines hardware requirements (Edge vs Cloud). |
@@ -86,21 +86,24 @@ To prevent "p-hacking" or seed-based anomalies, we use a rigorous two-layer test
 ## ⚠️ 6. Important Hardware Note for Users
 
 **Operational metrics (Time and Memory) are hardware-dependent.**
-The numbers reported in the benchmark were generated on a specific hardware configuration. When running your own evaluations:
-- **Memory**: Your `peak_memory_mb` may vary based on your OS, background processes, and RAM architecture.
+The numbers reported in the benchmark are sensitive to your machine's specs. When running your own evaluations:
+- **Memory**: `peak_memory_mb` may vary based on OS and background processes.
 - **Latency**: `predict_time_sec` will differ significantly between CPU and GPU (CUDA) executions.
 - **Throughput**: Throughput is highly sensitive to CPU clock speed and threading.
 
-**Recommendation**: When comparing models on your own hardware, always use **relative ratios** (e.g., *"Model A is 5x faster than Model B"*) rather than absolute seconds, as ratios remain consistent across similar hardware.
+**Recommendation**: When comparing models on your own hardware, always use **relative ratios** (e.g., *"Model A is 5x faster than Model B"*) rather than absolute seconds.
 
 ---
 
-## 🏁 7. Summary Decision Matrix
+## 🏁 7. Model Selection Framework (Decision Matrix)
 
-| If your priority is... | Recommended Model Class | Key Metric to Watch |
+Since no single model is the "best" for every use case, we provide this framework to help you select a model based on your specific requirements:
+
+| If your primary requirement is... | Consider this Model Class | Priority Metric to Watch |
 |---|---|---|
-| **Rapid Prototyping** | Foundation Model (TabPFN/SAP-RPT) | `total_wall_time_sec` |
-| **Absolute Max AUC** | Tuned GBDT (XGB/LGBM/Cat) | `roc_auc` |
-| **Reliable Probabilities** | Tuned GBDT / SAP-RPT | `ece_10` / `mce` |
-| **High-Traffic Inference** | Tuned GBDT / MLP | `throughput` / `predict_time_sec` |
-| **Small Data (N < 1000)** | Foundation Model | `roc_auc` (Few-Shot) |
+| **Rapid Prototyping / Zero-Shot** | Foundation Model (TabPFN) | `total_wall_time_sec` / `roc_auc` |
+| **Maximum Predictive Power** | Tuned GBDT (XGB/LGBM/Cat) | `roc_auc` / `avg_precision` |
+| **Trustworthy Probabilities** | Tuned GBDT / Calibrated Model | `ece_10` / `max_calibration_error` |
+| **Ultra-Low Latency / High Scale** | Tuned GBDT / MLP | `throughput` / `predict_time_sec` |
+| **Extremely Small Data (N < 1000)** | Foundation Model | `roc_auc` (Few-Shot Analysis) |
+| **Hardware-Constrained (Edge)** | MLP / LightGBM | `peak_memory_mb` / `predict_time_sec` |

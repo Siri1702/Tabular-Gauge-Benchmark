@@ -20,7 +20,6 @@ class ModelFactory:
     # format: "model_id": "module.path.ClassName"
     _REGISTRY = {
         "tabpfn": "tabular_gauge.models.tabpfn_model.TabPFNWrapper",
-        "tabpfn_35": "tabular_gauge.models.tabpfn_model.TabPFN35Wrapper",
         "xgboost": "tabular_gauge.models.xgboost_model.XGBoostWrapper",
         "lightgbm": "tabular_gauge.models.lightgbm_model.LightGBMWrapper",
         "catboost": "tabular_gauge.models.catboost_model.CatBoostWrapper",

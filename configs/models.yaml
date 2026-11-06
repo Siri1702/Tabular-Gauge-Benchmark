@@ -1,3 +1,20 @@
 models:
+  - id: tabpfn
+    enabled: true
+    description: "TabPFN 3.5 (Foundation Model)"
+  - id: mlp_sklearn
+    enabled: true
+    n_trials: 10
+    description: "Multi-Layer Perceptron"
   - id: xgboost
     enabled: true
+    n_trials: 10
+    description: "XGBoost"
+  - id: lightgbm
+    enabled: true
+    n_trials: 10
+    description: "LightGBM"
+  - id: catboost
+    enabled: true
+    n_trials: 10
+    description: "CatBoost"

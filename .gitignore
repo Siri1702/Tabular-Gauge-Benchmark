@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / runnable
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Project specific
+.env
+experiments/results/
+reports/
+research_archive/
+data/*.csv
+!data/smoke_test.csv
+
+# OS generated
+.DS_Store
+Thumbs.db
