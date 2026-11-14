@@ -1,0 +1,73 @@
+{
+  "n_cells": 90,
+  "n_paired": 45,
+  "overall_wilcoxon_p": 0.0,
+  "overall_wilcoxon_w": 1035.0,
+  "per_n": [
+    {
+      "train_size": "25",
+      "n_pairs": 9,
+      "mean_clean": 0.9028,
+      "mean_shuffled": 0.5222,
+      "mean_delta": 0.3806,
+      "max_abs_delta": 0.6782,
+      "wilcoxon_p_greater": 0.001953
+    },
+    {
+      "train_size": "50",
+      "n_pairs": 9,
+      "mean_clean": 0.9091,
+      "mean_shuffled": 0.5813,
+      "mean_delta": 0.3278,
+      "max_abs_delta": 0.4824,
+      "wilcoxon_p_greater": 0.001953
+    },
+    {
+      "train_size": "100",
+      "n_pairs": 9,
+      "mean_clean": 0.9144,
+      "mean_shuffled": 0.5266,
+      "mean_delta": 0.3878,
+      "max_abs_delta": 0.5702,
+      "wilcoxon_p_greater": 0.001953
+    },
+    {
+      "train_size": "500",
+      "n_pairs": 9,
+      "mean_clean": 0.9309,
+      "mean_shuffled": 0.5061,
+      "mean_delta": 0.4248,
+      "max_abs_delta": 0.6416,
+      "wilcoxon_p_greater": 0.001953
+    },
+    {
+      "train_size": "full",
+      "n_pairs": 9,
+      "mean_clean": 0.9524,
+      "mean_shuffled": 0.4649,
+      "mean_delta": 0.4874,
+      "max_abs_delta": 0.5418,
+      "wilcoxon_p_greater": 0.001953
+    }
+  ],
+  "per_dataset": [
+    {
+      "dataset": "banknote-auth",
+      "mean_clean": 0.9993499767848851,
+      "mean_shuffled": 0.5553662630808243,
+      "mean_delta": 0.44398371370406087
+    },
+    {
+      "dataset": "kc1",
+      "mean_clean": 0.7972865043453279,
+      "mean_shuffled": 0.4658148387560152,
+      "mean_delta": 0.3314716655893127
+    },
+    {
+      "dataset": "spambase",
+      "mean_clean": 0.9691012437835507,
+      "mean_shuffled": 0.5394859313236634,
+      "mean_delta": 0.42961531245988727
+    }
+  ]
+}
